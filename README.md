@@ -1,2 +1,2 @@
-# -
+# GaoJiJiaMiGongJu
 本工具采用双重加密机制，安全性高
