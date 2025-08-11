@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高级加密工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        admin: '#ef4444',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'card-hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        'modal': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+            }
+            .transition-all-300 {
+                transition: all 0.3s ease;
+            }
+            .backdrop-blur {
+                backdrop-filter: blur(8px);
+            }
+            .modal-backdrop {
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+            .touch-target {
+                touch-action: manipulation;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen font-inter text-dark">
+    <!-- 管理员通知 -->
+    <div id="admin-notification" class="fixed top-4 right-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-lg transform translate-x-full transition-all-300 z-50 max-w-xs">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fa fa-bullhorn text-blue-500 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <p id="notification-message" class="text-sm text-blue-700"></p>
+            </div>
+            <button id="close-notification" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-500">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 管理员按钮 -->
+        <div class="flex justify-end mb-4">
+            <button id="admin-btn" class="bg-admin hover:bg-admin/90 text-white px-4 py-2 rounded-lg transition-all-300 flex items-center text-sm">
+                <i class="fa fa-cog mr-2"></i> 管理员
+            </button>
+        </div>
+
+        <!-- 标题区域 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,5vw,3.5rem)] font-bold mb-3 bg-gradient-to-r from-primary to-purple-600 text-gradient">
+                <i class="fa fa-shield mr-3"></i>高级加密工具
+            </h1>
+            <p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+                双重加密保护，支持多种密钥类型，兼容所有字符
+            </p>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="bg-white rounded-2xl shadow-card p-6 md:p-8 transform hover:shadow-card-hover transition-all-300">
+            <!-- 模式切换和密钥类型选择 -->
+            <div class="mb-6 space-y-4">
+                <!-- 操作模式 -->
+                <div class="w-full">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">操作模式</h2>
+                    <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                        <button type="button" id="encrypt-mode" class="flex-1 px-4 py-3 text-sm font-medium text-white bg-primary rounded-l-lg border border-primary hover:bg-primary/90 focus:z-10 focus:ring-2 focus:ring-primary focus:text-white transition-all-300 touch-target">
+                            <i class="fa fa-lock mr-2"></i>加密
+                        </button>
+                        <button type="button" id="decrypt-mode" class="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-200 hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-primary focus:text-primary transition-all-300">
+                            <i class="fa fa-unlock mr-2"></i>解密
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 密钥类型选择 -->
+                <div class="w-full">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">密钥类型</h2>
+                    <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                        <button type="button" id="number-key-mode" class="flex-1 px-4 py-3 text-sm font-medium text-white bg-accent rounded-l-lg border border-accent hover:bg-accent/90 focus:z-10 focus:ring-2 focus:ring-accent focus:text-white transition-all-300">
+                            <i class="fa fa-hashtag mr-2"></i>数字密钥
+                        </button>
+                        <button type="button" id="letter-key-mode" class="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-200 hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-accent focus:text-accent transition-all-300">
+                            <i class="fa fa-font mr-2"></i>英文密钥
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 添加联机模式选择 -->
+                <div class="w-full">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">处理方式</h2>
+                    <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                        <button type="button" id="local-mode" class="flex-1 px-4 py-3 text-sm font-medium text-white bg-secondary rounded-l-lg border border-secondary hover:bg-secondary/90 focus:z-10 focus:ring-2 focus:ring-secondary focus:text-white transition-all-300">
+                            <i class="fa fa-desktop mr-2"></i>本地处理
+                        </button>
+                        <button type="button" id="online-mode" class="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border-t border-b border-gray-200 hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-secondary focus:text-secondary transition-all-300">
+                            <i class="fa fa-cloud mr-2"></i>联机处理
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 密钥设置区域 -->
+            <div class="mb-8 space-y-4">
+                <div id="number-key-container" class="flex flex-col sm:flex-row gap-2">
+                    <label for="number-key" class="block text-sm font-medium text-gray-700 mb-1 w-full">
+                        <i class="fa fa-key mr-1"></i>数字密钥 (1-255):
+                    </label>
+                    <input type="number" id="number-key" 
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg sm:rounded-r-none focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 outline-none"
+                           min="1" max="255" value="13">
+                    <button id="apply-number-key-btn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg sm:rounded-l-none transition-all-300 flex items-center justify-center whitespace-nowrap">
+                        <i class="fa fa-check mr-1"></i> 应用密钥
+                    </button>
+                </div>
+
+                <div id="letter-key-container" class="flex flex-col sm:flex-row gap-2 hidden">
+                    <label for="letter-key" class="block text-sm font-medium text-gray-700 mb-1 w-full">
+                        <i class="fa fa-key mr-1"></i>英文密钥 (仅字母):
+                    </label>
+                    <input type="text" id="letter-key" placeholder="输入英文字母作为密钥" 
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg sm:rounded-r-none focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 outline-none"
+                           value="SECRET">
+                    <button id="apply-letter-key-btn" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg sm:rounded-l-none transition-all-300 flex items-center justify-center whitespace-nowrap">
+                        <i class="fa fa-check mr-1"></i> 应用密钥
+                    </button>
+                </div>
+            </div>
+
+            <!-- 文本输入输出区域 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 输入区域 -->
+                <div class="flex flex-col h-[300px] sm:h-[400px]">
+                    <label for="input-text" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-file-text-o mr-1"></i> 输入文本:
+                    </label>
+                    <textarea id="input-text" rows="10" placeholder="请输入要加密的文本..." 
+                              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 outline-none resize-none"></textarea>
+                </div>
+            
+                <!-- 输出区域 -->
+                <div class="flex flex-col h-[300px] sm:h-[400px]">
+                    <label for="output-text" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-code mr-1"></i> 输出结果:
+                    </label>
+                    <textarea id="output-text" rows="10" placeholder="处理后的结果将显示在这里..." 
+                              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary focus:border-primary transition-all-300 outline-none resize-none" readonly></textarea>
+                    <div class="mt-4 flex gap-3">
+                        <button id="process-btn" class="flex-1 bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg transition-all-300 font-medium flex items-center justify-center">
+                            <i class="fa fa-cogs mr-2"></i> <span id="process-btn-text">执行加密</span>
+                        </button>
+                        <button id="copy-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg transition-all-300 flex items-center justify-center min-w-[48px]">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态提示 -->
+            <div id="status-message" class="mt-6 p-4 rounded-lg hidden transition-all-300 transform translate-y-2 opacity-0"></div>
+        </main>
+
+        <!-- 说明区域 -->
+        <div class="mt-8 bg-white/80 backdrop-blur rounded-xl p-6 shadow-md">
+            <h2 class="text-xl font-semibold mb-3 text-gray-800 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>加密原理说明
+            </h2>
+            <p class="text-gray-600 mb-3">本工具采用双重加密机制，安全性高：</p>
+            <ol class="list-decimal list-inside space-y-2 text-gray-600 mb-4">
+                <li>第一层：对每个字符的Unicode编码值进行数学变换</li>
+                <li>第二层：使用维吉尼亚密码进行二次加密</li>
+                <li>解密时按相反顺序进行两次解密</li>
+                <li>支持数字密钥（1-255）或英文密钥（任意长度字母）</li>
+            </ol>
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <p class="text-blue-800 text-sm"><i class="fa fa-lightbulb-o mr-1"></i> 提示：加密和解密必须使用相同的密钥类型和密钥值才能得到正确结果</p>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>高级加密工具 &copy; 2023 - 安全加密保护您的信息</p>
+        </footer>
+    </div>
+
+    <!-- 管理员登录模态框 -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity modal-backdrop" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-modal transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                                <i class="fa fa-lock text-admin mr-2"></i>管理员登录
+                            </h3>
+                            <div class="mt-4">
+                                <div class="mb-4">
+                                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">管理员密码</label>
+                                    <input type="password" id="admin-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-admin focus:border-admin transition-all-300 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="login-admin-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-admin text-base font-medium text-white hover:bg-admin/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-admin sm:ml-3 sm:w-auto sm:text-sm">
+                        登录
+                    </button>
+                    <button id="cancel-login-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理员设置模态框 -->
+    <div id="admin-settings-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity modal-backdrop" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-modal transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                                <i class="fa fa-cogs text-admin mr-2"></i>管理员设置
+                            </h3>
+                            <div class="mt-4 space-y-4">
+                                <!-- 密码修改 -->
+                                <div>
+                                    <label for="new-admin-password" class="block text-sm font-medium text-gray-700 mb-1">
+                                        修改管理员密码
+                                    </label>
+                                    <input type="password" id="new-admin-password" 
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-admin focus:border-admin transition-all-300 outline-none"
+                                           placeholder="输入新的管理员密码">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="save-admin-settings-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-admin text-base font-medium text-white hover:bg-admin/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-admin sm:ml-3 sm:w-auto sm:text-sm">
+                        保存设置
+                    </button>
+                    <button id="cancel-settings-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 系统常量和初始化
+        const DEFAULT_ADMIN_PASSWORD = 'SHUAI151222';
+        
+        // 初始化本地存储
+        function initStorage() {
+            // 初始化管理员密码
+            if (!localStorage.getItem('adminPassword')) {
+                localStorage.setItem('adminPassword', DEFAULT_ADMIN_PASSWORD);
+            }
+        }
+
+        // 获取DOM元素
+        const encryptModeBtn = document.getElementById('encrypt-mode');
+        const decryptModeBtn = document.getElementById('decrypt-mode');
+        const numberKeyModeBtn = document.getElementById('number-key-mode');
+        const letterKeyModeBtn = document.getElementById('letter-key-mode');
+        // 添加以下两行获取联机模式按钮
+        const localModeBtn = document.getElementById('local-mode');
+        const onlineModeBtn = document.getElementById('online-mode');
+        const numberKeyContainer = document.getElementById('number-key-container');
+        const letterKeyContainer = document.getElementById('letter-key-container');
+        const numberKeyInput = document.getElementById('number-key');
+        const letterKeyInput = document.getElementById('letter-key');
+        const applyNumberKeyBtn = document.getElementById('apply-number-key-btn');
+        const applyLetterKeyBtn = document.getElementById('apply-letter-key-btn');
+        const inputText = document.getElementById('input-text');
+        const outputText = document.getElementById('output-text');
+        const processBtn = document.getElementById('process-btn');
+        const processBtnText = document.getElementById('process-btn-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const statusMessage = document.getElementById('status-message');
+        const adminBtn = document.getElementById('admin-btn');
+        const adminLoginModal = document.getElementById('admin-login-modal');
+        const adminSettingsModal = document.getElementById('admin-settings-modal');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const loginAdminBtn = document.getElementById('login-admin-btn');
+        const cancelLoginBtn = document.getElementById('cancel-login-btn');
+        const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+        const newAdminPasswordInput = document.getElementById('new-admin-password');
+        const saveAdminSettingsBtn = document.getElementById('save-admin-settings-btn');
+        const adminNotification = document.getElementById('admin-notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const closeNotificationBtn = document.getElementById('close-notification');
+
+        // 状态变量
+        let currentMode = 'encrypt'; // 'encrypt' 或 'decrypt'
+        let currentKeyType = 'number'; // 'number' 或 'letter'
+        let currentNumberKey = 13; // 默认数字密钥
+        let currentLetterKey = 'SECRET'; // 默认英文密钥
+        let currentProcessingMode = 'local'; // 'local' 或 'online'
+
+        // 初始化
+        initStorage();
+
+        // 显示状态消息
+        function showMessage(text, isError = false) {
+            statusMessage.textContent = text;
+            statusMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'translate-y-2', 'opacity-0');
+            
+            if (isError) {
+                statusMessage.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                statusMessage.classList.add('bg-green-100', 'text-green-800');
+            }
+
+            // 显示动画
+            setTimeout(() => {
+                statusMessage.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // 3秒后自动隐藏消息
+            setTimeout(() => {
+                statusMessage.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 300);
+            }, 3000);
+        }
+
+        // 显示管理员通知
+        function showAdminNotification(text) {
+            notificationMessage.textContent = text;
+            adminNotification.classList.remove('translate-x-full');
+            
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                adminNotification.classList.add('translate-x-full');
+            }, 5000);
+        }
+
+        // 切换操作模式（加密/解密）
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            if (mode === 'encrypt') {
+                // 更新按钮样式
+                encryptModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                encryptModeBtn.classList.add('bg-primary', 'text-white', 'border-primary', 'hover:bg-primary/90');
+                
+                decryptModeBtn.classList.remove('bg-primary', 'text-white', 'border-primary', 'hover:bg-primary/90');
+                decryptModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                // 更新提示文本
+                inputText.placeholder = '请输入要加密的文本...';
+                processBtnText.textContent = '执行加密';
+            } else {
+                // 更新按钮样式
+                decryptModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                decryptModeBtn.classList.add('bg-primary', 'text-white', 'border-primary', 'hover:bg-primary/90');
+                
+                encryptModeBtn.classList.remove('bg-primary', 'text-white', 'border-primary', 'hover:bg-primary/90');
+                encryptModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                // 更新提示文本
+                inputText.placeholder = '请输入要解密的文本...';
+                processBtnText.textContent = '执行解密';
+            }
+        }
+
+        // 切换密钥类型（数字/英文）
+        function switchKeyType(type) {
+            currentKeyType = type;
+            
+            if (type === 'number') {
+                // 更新按钮样式
+                numberKeyModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                numberKeyModeBtn.classList.add('bg-accent', 'text-white', 'border-accent', 'hover:bg-accent/90');
+                
+                letterKeyModeBtn.classList.remove('bg-accent', 'text-white', 'border-accent', 'hover:bg-accent/90');
+                letterKeyModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                // 显示数字密钥容器，隐藏字母密钥容器
+                numberKeyContainer.classList.remove('hidden');
+                letterKeyContainer.classList.add('hidden');
+                
+                showMessage(`已切换到数字密钥模式，当前密钥: ${currentNumberKey}`);
+            } else {
+                // 更新按钮样式
+                letterKeyModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                letterKeyModeBtn.classList.add('bg-accent', 'text-white', 'border-accent', 'hover:bg-accent/90');
+                
+                numberKeyModeBtn.classList.remove('bg-accent', 'text-white', 'border-accent', 'hover:bg-accent/90');
+                numberKeyModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                // 显示字母密钥容器，隐藏数字密钥容器
+                letterKeyContainer.classList.remove('hidden');
+                numberKeyContainer.classList.add('hidden');
+                
+                showMessage(`已切换到英文密钥模式，当前密钥: ${currentLetterKey}`);
+            }
+        }
+
+        // 应用数字密钥
+        applyNumberKeyBtn.addEventListener('click', () => {
+            const key = parseInt(numberKeyInput.value, 10);
+            if (key >= 1 && key <= 255) {
+                currentNumberKey = key;
+                showMessage(`数字密钥已设置为: ${key}`);
+            } else {
+                showMessage('请输入1-255之间的有效数字密钥', true);
+                numberKeyInput.value = currentNumberKey; // 恢复为当前有效密钥
+            }
+        });
+
+        // 应用英文密钥
+        applyLetterKeyBtn.addEventListener('click', () => {
+            let key = letterKeyInput.value.trim().toUpperCase();
+            if (key && /^[A-Za-z]+$/.test(key)) {
+                currentLetterKey = key;
+                showMessage(`英文密钥已设置为: ${key}`);
+            } else {
+                showMessage('请输入有效的英文字母密钥（仅字母）', true);
+                letterKeyInput.value = currentLetterKey; // 恢复为当前有效密钥
+            }
+        });
+
+        // 复制结果到剪贴板
+        copyBtn.addEventListener('click', () => {
+            const text = outputText.value;
+            if (text) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showMessage('结果已复制到剪贴板'))
+                    .catch(err => showMessage('复制失败，请手动复制', true));
+            } else {
+                showMessage('没有可复制的内容', true);
+            }
+        });
+
+        // 第一重加密：基于字符编码的加密
+        function encodeWithNumber(text, key) {
+            if (!text) return '';
+            
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                // 获取字符的Unicode编码
+                const charCode = text.charCodeAt(i);
+                // 使用密钥进行加密变换
+                const encryptedCode = (charCode + key) % 65536;
+                // 将加密后的编码转换回字符
+                result += String.fromCharCode(encryptedCode);
+            }
+            
+            return result;
+        }
+
+        // 第一重解密：基于字符编码的解密
+        function decodeWithNumber(text, key) {
+            if (!text) return '';
+            
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                // 获取字符的Unicode编码
+                const charCode = text.charCodeAt(i);
+                // 使用密钥进行解密变换
+                let decryptedCode = (charCode - key) % 65536;
+                if (decryptedCode < 0) {
+                    decryptedCode += 65536;
+                }
+                // 将解密后的编码转换回字符
+                result += String.fromCharCode(decryptedCode);
+            }
+            
+            return result;
+        }
+
+        // 第二重加密：维吉尼亚加密
+        function vigenereEncrypt(text, key) {
+            if (!text || !key) return '';
+            
+            let result = '';
+            key = key.toUpperCase();
+            let keyIndex = 0;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charAt(i);
+                
+                // 处理大写字母
+                if (char >= 'A' && char <= 'Z') {
+                    const keyChar = key.charAt(keyIndex % key.length);
+                    const shift = keyChar.charCodeAt(0) - 'A'.charCodeAt(0);
+                    const encryptedCharCode = ((char.charCodeAt(0) - 'A'.charCodeAt(0) + shift) % 26) + 'A'.charCodeAt(0);
+                    result += String.fromCharCode(encryptedCharCode);
+                    keyIndex++;
+                }
+                // 处理小写字母
+                else if (char >= 'a' && char <= 'z') {
+                    const keyChar = key.charAt(keyIndex % key.length);
+                    const shift = keyChar.charCodeAt(0) - 'A'.charCodeAt(0);
+                    const encryptedCharCode = ((char.charCodeAt(0) - 'a'.charCodeAt(0) + shift) % 26) + 'a'.charCodeAt(0);
+                    result += String.fromCharCode(encryptedCharCode);
+                    keyIndex++;
+                }
+                // 非字母字符不加密
+                else {
+                    result += char;
+                }
+            }
+            
+            return result;
+        }
+
+        // 第二重解密：维吉尼亚解密
+        function vigenereDecrypt(text, key) {
+            if (!text || !key) return '';
+            
+            let result = '';
+            key = key.toUpperCase();
+            let keyIndex = 0;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charAt(i);
+                
+                // 处理大写字母
+                if (char >= 'A' && char <= 'Z') {
+                    const keyChar = key.charAt(keyIndex % key.length);
+                    const shift = keyChar.charCodeAt(0) - 'A'.charCodeAt(0);
+                    let decryptedCharCode = (char.charCodeAt(0) - 'A'.charCodeAt(0) - shift) % 26;
+                    if (decryptedCharCode < 0) decryptedCharCode += 26;
+                    decryptedCharCode += 'A'.charCodeAt(0);
+                    result += String.fromCharCode(decryptedCharCode);
+                    keyIndex++;
+                }
+                // 处理小写字母
+                else if (char >= 'a' && char <= 'z') {
+                    const keyChar = key.charAt(keyIndex % key.length);
+                    const shift = keyChar.charCodeAt(0) - 'A'.charCodeAt(0);
+                    let decryptedCharCode = (char.charCodeAt(0) - 'a'.charCodeAt(0) - shift) % 26;
+                    if (decryptedCharCode < 0) decryptedCharCode += 26;
+                    decryptedCharCode += 'a'.charCodeAt(0);
+                    result += String.fromCharCode(decryptedCharCode);
+                    keyIndex++;
+                }
+                // 非字母字符不解密
+                else {
+                    result += char;
+                }
+            }
+            
+            return result;
+        }
+
+        // 双重加密函数
+        function doubleEncrypt(text, privateKey, keyType) {
+            if (!text) return '';
+            
+            // 第一层：基于字符编码的加密
+            let encryptedOnce = encodeWithNumber(text, keyType === 'number' ? privateKey : privateKey.length);
+            
+            // 第二层：维吉尼亚加密
+            let keyForVigenere = keyType === 'letter' ? privateKey : String.fromCharCode(65 + (privateKey % 26));
+            let encryptedFinal = vigenereEncrypt(encryptedOnce, keyForVigenere);
+            
+            return encryptedFinal;
+        }
+
+        // 双重解密函数
+        function doubleDecrypt(text, privateKey, keyType) {
+            if (!text) return '';
+            
+            // 第一层解密：维吉尼亚解密
+            let keyForVigenere = keyType === 'letter' ? privateKey : String.fromCharCode(65 + (privateKey % 26));
+            let decryptedOnce = vigenereDecrypt(text, keyForVigenere);
+            
+            // 第二层解密：基于字符编码的解密
+            let decryptedFinal = decodeWithNumber(decryptedOnce, keyType === 'number' ? privateKey : privateKey.length);
+            
+            return decryptedFinal;
+        }
+
+        // 切换处理方式（本地/联机）
+        function switchProcessingMode(mode) {
+            currentProcessingMode = mode;
+            
+            if (mode === 'local') {
+                // 更新按钮样式
+                localModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                localModeBtn.classList.add('bg-secondary', 'text-white', 'border-secondary', 'hover:bg-secondary/90');
+                
+                onlineModeBtn.classList.remove('bg-secondary', 'text-white', 'border-secondary', 'hover:bg-secondary/90');
+                onlineModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                showMessage('已切换到本地处理模式');
+            } else {
+                // 更新按钮样式
+                onlineModeBtn.classList.remove('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                onlineModeBtn.classList.add('bg-secondary', 'text-white', 'border-secondary', 'hover:bg-secondary/90');
+                
+                localModeBtn.classList.remove('bg-secondary', 'text-white', 'border-secondary', 'hover:bg-secondary/90');
+                localModeBtn.classList.add('bg-white', 'text-gray-700', 'border-t', 'border-b', 'border-gray-200', 'hover:bg-gray-100');
+                
+                showMessage('已切换到联机处理模式');
+            }
+        }
+
+        // 联机加密函数
+        async function onlineEncrypt(text, key, keyType) {
+            try {
+                console.log('发送加密请求到: http://localhost:5001/encrypt');
+                console.log('请求数据:', {text, key, keyType});
+                const response = await fetch('http://localhost:5001/encrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        key: key,
+                        key_type: keyType
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || '联机加密失败');
+                }
+                return data.result;
+            } catch (error) {
+                showMessage('联机加密失败: ' + error.message, true);
+                throw error;
+            }
+        }
+
+        // 联机解密函数
+        async function onlineDecrypt(text, key, keyType) {
+            try {
+                console.log('发送解密请求到: http://localhost:5001/decrypt');
+                console.log('请求数据:', {text, key, keyType});
+                const response = await fetch('http://localhost:5001/decrypt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        key: key,
+                        key_type: keyType
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || '联机解密失败');
+                }
+                return data.result;
+            } catch (error) {
+                showMessage('联机解密失败: ' + error.message, true);
+                throw error;
+            }
+        }
+
+        // 处理按钮点击事件
+        processBtn.addEventListener('click', async () => {
+            const text = inputText.value;
+            if (!text) {
+                showMessage(`请输入要${currentMode === 'encrypt' ? '加密' : '解密'}的文本`, true);
+                return;
+            }
+            
+            try {
+                let key, result;
+                
+                // 获取当前密钥
+                if (currentKeyType === 'number') {
+                    key = currentNumberKey;
+                } else {
+                    key = currentLetterKey;
+                }
+                
+                // 执行加密或解密
+                if (currentProcessingMode === 'online') {
+                    // 联机处理
+                    showMessage(`正在${currentMode === 'encrypt' ? '联机加密' : '联机解密'}...`);
+                    if (currentMode === 'encrypt') {
+                        result = await onlineEncrypt(text, key, currentKeyType);
+                    } else {
+                        result = await onlineDecrypt(text, key, currentKeyType);
+                    }
+                    outputText.value = result;
+                    showMessage(`${currentMode === 'encrypt' ? '联机加密' : '联机解密'}成功`);
+                } else {
+                    // 本地处理
+                    if (currentMode === 'encrypt') {
+                        result = doubleEncrypt(text, key, currentKeyType);
+                        outputText.value = result;
+                        showMessage('文本加密成功');
+                    } else {
+                        result = doubleDecrypt(text, key, currentKeyType);
+                        outputText.value = result;
+                        showMessage('文本解密成功');
+                    }
+                }
+            } catch (error) {
+                showMessage('处理失败：' + error.message, true);
+                console.error(error);
+            }
+        });
+
+        // 管理员功能
+        adminBtn.addEventListener('click', () => {
+            // 重置登录表单
+            adminPasswordInput.value = '';
+            // 显示登录模态框
+            adminLoginModal.classList.remove('hidden');
+        });
+
+        // 关闭通知
+        closeNotificationBtn.addEventListener('click', () => {
+            adminNotification.classList.add('translate-x-full');
+        });
+
+        // 管理员登录
+        loginAdminBtn.addEventListener('click', () => {
+            const password = adminPasswordInput.value;
+            const storedPassword = localStorage.getItem('adminPassword') || DEFAULT_ADMIN_PASSWORD;
+            
+            if (password === storedPassword) {
+                // 登录成功，显示设置页面
+                adminLoginModal.classList.add('hidden');
+                // 重置密码输入框
+                newAdminPasswordInput.value = '';
+                // 显示设置模态框
+                adminSettingsModal.classList.remove('hidden');
+            } else {
+                showMessage('管理员密码不正确', true);
+            }
+        });
+
+        // 取消登录
+        cancelLoginBtn.addEventListener('click', () => {
+            adminLoginModal.classList.add('hidden');
+        });
+
+        // 取消设置
+        cancelSettingsBtn.addEventListener('click', () => {
+            adminSettingsModal.classList.add('hidden');
+        });
+
+        // 保存管理员设置
+        saveAdminSettingsBtn.addEventListener('click', () => {
+            // 处理密码更新
+            const newPassword = newAdminPasswordInput.value.trim();
+            if (newPassword) {
+                localStorage.setItem('adminPassword', newPassword);
+                showMessage('管理员密码已更新');
+                showAdminNotification('管理员密码已更新');
+            } else {
+                showMessage('请输入新的管理员密码', true);
+                return;
+            }
+            
+            // 关闭设置模态框
+            adminSettingsModal.classList.add('hidden');
+        });
+
+        // 事件监听
+        encryptModeBtn.addEventListener('click', () => switchMode('encrypt'));
+        decryptModeBtn.addEventListener('click', () => switchMode('decrypt'));
+        numberKeyModeBtn.addEventListener('click', () => switchKeyType('number'));
+        letterKeyModeBtn.addEventListener('click', () => switchKeyType('letter'));
+        // 添加以下两行绑定联机模式按钮事件
+        localModeBtn.addEventListener('click', () => switchProcessingMode('local'));
+        onlineModeBtn.addEventListener('click', () => switchProcessingMode('online'));
+
+        // 支持回车键快速处理
+        inputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                processBtn.click();
+            }
+        });
+
+        // 点击模态框背景关闭模态框
+        window.addEventListener('click', (e) => {
+            if (e.target === adminLoginModal) {
+                adminLoginModal.classList.add('hidden');
+            }
+            if (e.target === adminSettingsModal) {
+                adminSettingsModal.classList.add('hidden');
+            }
+        });
+
+        // 初始化页面
+        showMessage(`已准备就绪，当前模式：数字密钥，密钥值：${currentNumberKey}，本地处理`);
+    </script>
+</body>
+</html>
